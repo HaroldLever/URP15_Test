@@ -32,6 +32,8 @@ Shader "MyShader/Toon"
         [Toggle(_ENABLE_LIGHT_PROBE)] _EnableLightProbe ("EnableLightProbe",float) = 1
 
         [Header(Experimental)][Space(10)]
+        [Toggle(_USE_SHADOW_DELAY)]_USE_SHADOW_DELAY ("UseShadowDelay", float) = 0.0
+        [Space(10)]
         [Toggle(_BETTER_MAINLIGHT_SHADOW)]_BetterMainLightShadow ("BetterMainLightShadow", float) = 0.0
         _ML_MaxStep ("ML_MaxStep", float) = 1
         _ML_StepLength ("ML_StepLength", float) = 0.0001
@@ -95,6 +97,7 @@ Shader "MyShader/Toon"
             #pragma multi_compile_local_fragment _ _ENABLE_LIGHT_PROBE
             #pragma multi_compile_local_fragment _ _BETTER_MAINLIGHT_SHADOW
             #pragma multi_compile_local_fragment _ _BETTER_ADDLIGHT_SHADOW
+            #pragma multi_compile_local _ _USE_SHADOW_DELAY
 
             // -------------------------------------
             // Universal Pipeline keywords
@@ -112,6 +115,7 @@ Shader "MyShader/Toon"
             #pragma multi_compile_fragment _ _LIGHT_COOKIES
             #pragma multi_compile _ _FORWARD_PLUS
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
+            #pragma multi_compile _ _SHADOW_DELAY
 
             // -------------------------------------
             // Unity defined keywords
@@ -298,7 +302,7 @@ Shader "MyShader/Toon"
                 #endif  // #ifdef BETTER_MAINLIGHT_SHADOW
 
                 half3 diffuse = CalculateToonDiffuse(wNor, mainLight, prop.a, mask.a, faceMaskFlip);
-
+                // return half4(diffuse, 1.0);
 
                 // 漫反射_额外光
                 int addLightCount = GetAdditionalLightsCount();

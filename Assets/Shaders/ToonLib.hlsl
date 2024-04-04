@@ -32,7 +32,7 @@ cbuffer UnityPerMaterial
 
 half3 CalculateToonDiffuse(half3 wNor, Light light, half channel=0.0, half shadowMask=1.0, half faceMaskFlip=1.0)
 {
-    half nDotL = saturate(dot(light.direction, wNor));
+    half nDotL = dot(light.direction, wNor);
     //half stepNDotL = smoothstep(_StepA, _StepB, nDotL);
 
     #ifdef _IS_FACE
@@ -41,7 +41,7 @@ half3 CalculateToonDiffuse(half3 wNor, Light light, half channel=0.0, half shado
         half faceLM = faceLightDir.z > 0 ? shadowMask : faceMaskFlip;
         nDotL = smoothstep(1-faceStepA, 1-faceStepA+(1-faceStepA),faceLM);
     #else
-        nDotL *= shadowMask;
+        // nDotL *= shadowMask;
     #endif
 
     #ifdef _USE_RAMPMAP
@@ -66,7 +66,7 @@ half3 CalculateToonDiffuse(half3 wNor, Light light, half channel=0.0, half shado
         return diffuse;
     #endif
     
-    diffuse *= light.color * light.distanceAttenuation;;
+    diffuse *= light.color * light.distanceAttenuation;
     
     return diffuse;
 }
