@@ -40,29 +40,25 @@ v2f SRToonOutlineVertex (appdata v)
     o.uv = v.uv;
     o.vertexCol = v.vertexCol;
 
-    half3 normal = TransformObjectToWorldNormal(v.normal);
-    half3 tangent = TransformObjectToWorldDir(v.tangent.xyz);
-    half3 biTangent = cross(normal, tangent) * v.tangent.w * GetOddNegativeScale();
+    half3 oNor = v.normal.xyz;
+    oNor *= v.vertexCol.a;
 
-    // half3 tNor = v.vertexCol.rgb;
-    // tNor = tNor.xyz *2-1;
-    // tNor = half3(tNor.x, -tNor.y, tNor.z);
-
-    // real3x3 tbn = real3x3(tangent, biTangent,normal);
-    // normal = TransformTangentToWorld(tNor.xyz, tbn, true);
-    normal = TransformWorldToObjectDir(normal);
-    normal *= v.vertexCol.a;
-
-    half3 norCS = \
-    mul((float3x3)UNITY_MATRIX_MVP,normal);
-    float2 outlineOffset = normalize(norCS.xy)/_ScreenParams.xy \
-            * o.pos.w * _OutlineParam.x;
-    // #if (defined(_VERTEXCOL_DEBUG_R)||defined(_VERTEXCOL_DEBUG_G)||defined(_VERTEXCOL_DEBUG_A)||defined(_VERTEXCOL_DEBUG_RGB))
-        o.pos = TransformObjectToHClip(v.vertex.xyz + normal * _OutlineParam.y);
-    // #else
-    //     o.pos.xy += length(outlineOffset) < length(norCS.xy) * _OutlineParam.y ? \
-    //             outlineOffset : norCS.xy * _OutlineParam.y;
-    // #endif
+    // 裁剪空间下的顶点位置
+    float4 cOutlinePos = TransformObjectToHClip(v.vertex.xyz + oNor * _OutlineParam.y);
+    float4 cPos = TransformObjectToHClip(v.vertex.xyz);
+    // NDC空间下的顶点位置
+    float4 ndcOutlinePos = cOutlinePos / cOutlinePos.w;
+    float4 ndcPos = cPos / cPos.w;
+    // 屏幕空间下的顶点距离（仅xy）
+    float2 sDist = (ndcOutlinePos.xy - ndcPos.xy) * _ScreenParams.xy;
+    // 法线缩放系数
+    float norScaleFac = sqrt(dot(sDist.xy, sDist.xy)) / _OutlineParam.x;
+    // 输出pos
+    if(norScaleFac > 1.0){
+        o.pos = TransformObjectToHClip(v.vertex.xyz + oNor * _OutlineParam.y / norScaleFac);
+    }else{
+        o.pos = cOutlinePos;
+    }
 
     o.fPos = TransformObjectToHClip(v.vertex.xyz);
     
